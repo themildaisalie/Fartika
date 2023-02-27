@@ -4,6 +4,8 @@
 --- EXAMPLE INIT SCRIPT
 --- ////////////////////
 
+task.wait(1/30) --Hacky patch as particleemitter:Emit() doesnt work when ran on the first frame (Usually when the script is started in ReplicatedFirst)
+
 local camera = workspace.CurrentCamera
 
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
