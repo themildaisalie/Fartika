@@ -20,12 +20,9 @@ local FrustrumLayer = {}
 FrustrumLayer.__index = FrustrumLayer
 
 type FrustumLayer = {
-	FrustrumLayer: {
-		[Vector3]: {
-			Instance: Attachment & {
-				ParticleEmitter: ParticleEmitter
-			};
-			RelativeCFrame: CFrame;
+	FrustrumContainer: BasePart & {
+		Attachment & {
+			ParticleEmitter: ParticleEmitter;
 		}
 	};
 	Update: (self: FrustumLayer) -> ();
@@ -40,18 +37,32 @@ type FrustrumConfig = {
 	light_influence: number;
 }
 
+function CalculateParticleSquash(target_ratio: number): (number, number) --Gets the new size and squash of a particle
+	local squash = math.sqrt(target_ratio) - 1
+	return squash,  1 / (1 + squash)
+end
+
 function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer --Constructor
 	local fov = camera.FieldOfView
 	local camera_position = camera.CFrame.Position
 	
-	local viewport_offset = (camera.ViewportSize / Vector2.new(config.width, config.height)) * 0.25
+	local viewport_offset = (camera.ViewportSize / Vector2.new(config.width, config.height)) * 0.5
 	
 	--Get size for particles
-	local aspect_ratio = (camera.ViewportSize.X / camera.ViewportSize.Y) / (config.width / config.height)
-	local particle_squish = -(aspect_ratio - 1)
-	local particle_size = ((math.atan(fov) * config.depth_studs) / config.height) * 1.11
+	local ratio = (camera.ViewportSize.X / camera.ViewportSize.Y) / (config.width / config.height)
+	local particle_squish, size_multi = CalculateParticleSquash(ratio)
+	
+	local particle_size = ((math.atan(fov) * config.depth_studs) / config.height) * size_multi * 2.809442736258989 / (config.width / config.height)
 
-	local frustrum_instances = {}
+	local container_part = Instance.new("Part"); do
+		container_part.Anchored = true
+		container_part.CanCollide = false
+		container_part.CanQuery = false
+		container_part.CanTouch = false
+		container_part.Transparency = 1
+		container_part.Size = Vector3.zero
+		container_part.Parent = camera
+	end
 
 	for x = 1, config.width do
 		for y = 1, config.height do
@@ -60,11 +71,10 @@ function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer 
 			local depth_multi = 1 / camera.CFrame.LookVector:Dot(unit_ray.Direction)
 			
 			local origin = unit_ray.Origin + (unit_ray.Direction * config.depth_studs * depth_multi)
-			local world_cframe = CFrame.lookAt(origin, camera_position)
 
 			local attachment = Instance.new("Attachment"); do
-				attachment.WorldCFrame = world_cframe
-				attachment.Parent = workspace.Terrain
+				attachment.Position = camera.CFrame:PointToObjectSpace(origin) --Must be set after as it is parented to a part, this is temporary
+				attachment.Parent = container_part
 			end
 
 			local particle = Instance.new("ParticleEmitter"); do
@@ -72,30 +82,24 @@ function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer 
 				particle:Emit(1)
 				particle.Size = NumberSequence.new(particle_size, particle_size)
 				particle.Transparency = NumberSequence.new(1 - config.density, 1 - config.density)
-				particle.Squash = NumberSequence.new(particle_squish, particle_squish)
+				particle.Squash = NumberSequence.new(-particle_squish, -particle_squish)
 				particle.TimeScale = 0
 				particle.LightInfluence = config.light_influence
 				particle.LockedToPart = true
 				particle.Texture = "http://www.roblox.com/asset/?id=1195495135"
 				particle.Parent = attachment
 			end
-
-			frustrum_instances[Vector3.new(y, x, 0)] = {
-				Instance = attachment;
-				RelativeCFrame = camera.CFrame:ToObjectSpace(world_cframe);
-			}
 		end
 	end
 
-	local self = setmetatable({FrustrumLayer = frustrum_instances}, FrustrumLayer) :: any
+	local self = setmetatable({FrustrumContainer = container_part}, FrustrumLayer) :: any
 
 	return self
 end
 
 function FrustrumLayer.Update(self: FrustumLayer)
-	for x, i in self.FrustrumLayer do
-		i.Instance.WorldCFrame = camera.CFrame * i.RelativeCFrame
-	end
+	--TODO update aspect ratio and stuff
+	self.FrustrumContainer.CFrame = camera.CFrame
 end
 
 --- << Generics
