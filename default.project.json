@@ -1,0 +1,20 @@
+{
+    "name": "Shartika",
+    "tree": {
+        "$className": "DataModel",
+
+        "ReplicatedFirst": {
+            "$className": "ReplicatedFirst",
+            "$path": "src/ReplicatedFirst"
+        },
+
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+                "$path": "src/StarterPlayerScripts"
+            }
+        }
+    }
+}
