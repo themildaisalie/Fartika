@@ -2,9 +2,7 @@
 
 --- ////////////////////
 --- EXAMPLE INIT SCRIPT
---- ////////////////////
-
-task.wait(1/30) --Hacky patch as particleemitter:Emit() doesnt work when ran on the first frame (Usually when the script is started in ReplicatedFirst)
+--- ////////////////////``
 
 local camera = workspace.CurrentCamera
 
@@ -12,21 +10,20 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local Modules = ReplicatedFirst:WaitForChild("Modules")
 local VolumetricLib = require(Modules:WaitForChild("VolumetricLib"))
 
-local pixelDensity = 80
-local width = camera.ViewportSize.X / pixelDensity
-local height = width * (camera.ViewportSize.Y / camera.ViewportSize.X)
+local width = 16
+local height = math.round(width * (camera.ViewportSize.X / camera.ViewportSize.Y)) --Scales with aspect ratio roughly correctly
 
-local totalAmount = 10
-local totalDepth = 150
+local totalAmount = 8
+local totalDepth = 80
 
 local layers = {}
-for x = 1, 6 do
+for x = 1, totalAmount do
 	table.insert(layers, VolumetricLib.BuildFrustrumLayer({
 		width = width;
 		height = height;
 		depth_studs = (totalDepth / totalAmount) * x;
 
-		density = 0.1;
+		density = 0.22;
 		light_influence = 1;
 	}))
 end
