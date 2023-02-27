@@ -39,7 +39,10 @@ type FrustrumConfig = {
 
 function CalculateParticleSquash(target_ratio: number): (number, number) --Gets the new size and squash of a particle
 	local squash = math.sqrt(target_ratio) - 1
-	return squash,  1 / (1 + squash)
+	
+	local diff = 1 / (1 + squash)
+	
+	return squash,  diff
 end
 
 function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer --Constructor
@@ -52,7 +55,8 @@ function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer 
 	local ratio = (camera.ViewportSize.X / camera.ViewportSize.Y) / (config.width / config.height)
 	local particle_squish, size_multi = CalculateParticleSquash(ratio)
 	
-	local particle_size = ((math.atan(fov) * config.depth_studs) / config.height) * size_multi * 2.809442736258989 / (config.width / config.height)
+	local magic_multi = (ratio * 0.4513088) --Witchcraft
+	local particle_size = ((math.atan(fov) * config.depth_studs) / config.height) * size_multi * magic_multi
 
 	local container_part = Instance.new("Part"); do
 		container_part.Anchored = true
