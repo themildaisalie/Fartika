@@ -55,8 +55,8 @@ function VolumetricLib.BuildFrustrumLayer(config: FrustrumConfig): FrustumLayer 
 	local ratio = (camera.ViewportSize.X / camera.ViewportSize.Y) / (config.width / config.height)
 	local particle_squish, size_multi = CalculateParticleSquash(ratio)
 	
-	local magic_multi = (ratio * 0.4513088) --Witchcraft
-	local particle_size = ((math.atan(fov) * config.depth_studs) / config.height) * size_multi * magic_multi
+	local magic_multi = 1 + (0.1 / config.depth_studs) --This accounts for gaps, perfectly?? somehow???
+	local particle_size = (((math.tan(math.rad(fov * 0.5)) * config.depth_studs) / config.height) / size_multi) * magic_multi
 
 	local container_part = Instance.new("Part"); do
 		container_part.Anchored = true
